@@ -39,7 +39,6 @@
              (entities theorems))
 
 ;; Assets
-(define image:ball         (make-image "assets/images/ball.png"))
 
 ;; Game data
 (define game-width    640.0)
@@ -54,7 +53,7 @@
   (let* ((tactics (list induction))
          (theorems (list add_zero add_succ))
          (held-ents (vector (make-random-ent (append tactics theorems)) #f #f #f #f #f))
-         (dropped-ents (list))
+         (dropped-ents (make-buf (make-vector 100 #f) 0))
          (goals 'make-goals-1)
          (walls (vector (make-wall (vec2 (* 0.3 game-width) (* 0.1 game-height))
                                    (vec2 1.0 0.0)
@@ -85,9 +84,7 @@
          (dropped-ents (world-dropped-ents world)))
     (if (world-drop? world)
         (begin ;; move currently held ent to dropped-ents
-          (if (null? dropped-ents)
-              (world-dropped-ents-set! world (list curr-held-ent))
-              (world-dropped-ents-set! world (append! dropped-ents (list curr-held-ent))))
+          (buf-push! dropped-ents curr-held-ent)
           (ball-dropped-set! curr-held-ent #t)
           (world-drop-set! world #f))
         #t)))
@@ -123,6 +120,25 @@
             (hashtable-set! cache x str)
             str)))))
 
+(define (draw-ball context ball)
+  (let* ((r-ball (ball-r ball))
+         (color-ball (ball-color ball))
+         (label-ball (ball-label ball))
+         (x (vec2-x (ball-p ball)))
+         (y (vec2-y (ball-p ball))))
+    ;; ent outline
+    (begin-path context)
+    (set-stroke-color! context color-ball)
+    (arc context x y r-ball 0.0 6.28318)
+    (set-line-width! context 5.0)
+    (stroke context)
+    ;; label
+    ;; (set-fill-color! context "#ffffff")
+    ;; (set-font! context "bold 12px monospace")
+    ;; (set-text-align! context "center")
+    ;; (fill-text context label-ball x y)
+    ))
+
 (define (draw prev-time)
   (let* ((held-ents (world-held-ents *world*))
          (curr-held-ent (vector-ref held-ents 0))
@@ -130,11 +146,12 @@
          (walls (world-walls *world*)))
 
     ;; Draw background
-    (set-fill-color! context "#140c1c")
+    ;; (set-fill-color! context "#F7F7F9") ;; day
+    (set-fill-color! context "#090C08") ;; night
     (fill-rect context 0.0 0.0 game-width game-height)
 
     ;; Draw walls
-    (set-fill-color! context "#30d3c8")
+    (set-fill-color! context wall-color)
     (let loop ((i 0))
       (if (< i (vector-length walls))
           (let* ((wall (vector-ref walls i))
@@ -145,43 +162,22 @@
           #t))
 
     ;; Draw curr-held-ent
-    (let* ((r-ball (ball-r curr-held-ent))
-           (⌀ (* 2 r-ball))
-           (x (- (vec2-x (ball-p curr-held-ent)) r-ball))
-           (y (- (vec2-y (ball-p curr-held-ent)) r-ball)))
-      (draw-image context image:ball
-                  0.0 0.0 ⌀ ⌀
-                  x y ⌀ ⌀))
+    (draw-ball context curr-held-ent)
 
     ;; Draw dropped-ents
-    (for-each (lambda (dropped-ent)
-                (let* ((r-ball (ball-r dropped-ent))
-                       (⌀ (* 2 r-ball))
-                       (x (- (vec2-x (ball-p dropped-ent)) r-ball))
-                       (y (- (vec2-y (ball-p dropped-ent)) r-ball)))
-                  (draw-image context image:ball
-                              0.0 0.0 ⌀ ⌀
-                              x y ⌀ ⌀)))
-              dropped-ents)
+    (buf-do dropped-ents
+            (lambda (dropped-ent)
+              (draw-ball context dropped-ent)))
 
     ;; Print relevant information
-    (set-fill-color! context "#ffffff")
-    (set-font! context "bold 12px monospace")
-    (set-text-align! context "left")
-    (fill-text context "ball-p:" 16.0 36.0)
-    (fill-text context (number->string* (vec2-x (ball-p curr-held-ent))) 16.0 50.0)
-    (fill-text context (number->string* (vec2-y (ball-p curr-held-ent))) 16.0 64.0)
-    (fill-text context (ball-label curr-held-ent) 16.0 78.0)
-    (fill-text context (number->string* (length dropped-ents)) 16.0 92.0)
-
-    ;; (match (level-state *level*)
-    ;;   ('win
-    ;;    (set-text-align! context "center")
-    ;;    (fill-text context "YAY YOU DID IT!!!" (/ game-width 2.0) (/ game-height 2.0)))
-    ;;   ('lose
-    ;;    (set-text-align! context "center")
-    ;;    (fill-text context "OH NO, GAME OVER :(" (/ game-width 2.0) (/ game-height 2.0)))
-    ;;   (_ #t))
+    ;; (set-fill-color! context "#ffffff")
+    ;; (set-font! context "bold 12px monospace")
+    ;; (set-text-align! context "left")
+    ;; (fill-text context "ball-p:" 16.0 36.0)
+    ;; (fill-text context (number->string* (vec2-x (ball-p curr-held-ent))) 16.0 50.0)
+    ;; (fill-text context (number->string* (vec2-y (ball-p curr-held-ent))) 16.0 64.0)
+    ;; (fill-text context (ball-label curr-held-ent) 16.0 78.0)
+    ;; (fill-text context (number->string* (buf-used dropped-ents)) 16.0 92.0)
     )
   (request-animation-frame draw-callback))
 (define draw-callback (procedure->external draw))

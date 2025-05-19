@@ -18,22 +18,24 @@
 ;;;
 ;;; Code:
 
-(define-module (entities tactics)
+(define-module (entities goals)
   #:use-module (entities)
   #:use-module (math vector)
-  #:export (induction))
+  #:export (+two +four +succzero +succsucczero))
 
-;; implicit tactics:
-;;   rfl:
-;;     equality (applied on contact between equal left and right goals)
-;;   rw (specifically nth_rewrite [n] [h]):
-;;     substitute in assumption (applied on contact between assumption and compatible goal)
+;; merge rules:
+;; goals can only merge with theorems, not with each other
 
-(define tact-color "#006DAA") ;; blue
-(define tact-r 15.0)
-(define tact-m (* 10 tact-r))
+(define goal-color "#FF6B6B") ;; red
+(define goal-r 22.0)
+(define goal-m (* 10 goal-r))
 
-(define (induction p_0x p_0y)
+(define (add_zero p_0x p_0y)
   (let* ((p_0 (vec2 p_0x p_0y))
          (v_0 (vec2 0.0 0.0)))
-    (make-ball p_0 v_0 #f #f tact-r tact-m tact-color "induction")))
+    (make-ball p_0 v_0 #f #f goal-r goal-m goal-color "+,+0 -> +")))
+
+(define (add_succ p_0x p_0y)
+  (let* ((p_0 (vec2 p_0x p_0y))
+         (v_0 (vec2 0.0 0.0)))
+    (make-ball p_0 v_0 #f #f goal-r goal-m goal-color "+,+succ -> succ+,succ+")))

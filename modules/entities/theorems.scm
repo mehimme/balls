@@ -21,28 +21,57 @@
 (define-module (entities theorems)
   #:use-module (entities)
   #:use-module (math vector)
-  #:export (add_zero add_succ))
+  #:export
+  (four-succ_three
+   three-succ_two
+   two-succ_one
+   one-succ_zero
+
+   add_zero
+   add_succ))
+
+(define thrm-color "#32936F") ;; green
+(define thrm-r 30.0)
+(define thrm-m (* 10 thrm-r))
+
+(define (four-succ_three p_0x p_0y)
+  (let* ((p_0 (vec2 p_0x p_0y))
+         (v_0 (vec2 0.0 0.0))
+         (r 11.0)
+         (m 100.0))
+    (make-ball p_0 v_0 #f #f thrm-r thrm-m thrm-color "+4 → +succ3")))
+
+(define (three-succ_two p_0x p_0y)
+  (let* ((p_0 (vec2 p_0x p_0y))
+         (v_0 (vec2 0.0 0.0))
+         (r 11.0)
+         (m 100.0))
+    (make-ball p_0 v_0 #f #f thrm-r thrm-m thrm-color "+3 → +succ2")))
+
+(define (two-succ_one p_0x p_0y)
+  (let* ((p_0 (vec2 p_0x p_0y))
+         (v_0 (vec2 0.0 0.0))
+         (r 11.0)
+         (m 100.0))
+    (make-ball p_0 v_0 #f #f thrm-r thrm-m thrm-color "+2 → +succ1")))
+
+(define (one-succ_zero p_0x p_0y)
+  (let* ((p_0 (vec2 p_0x p_0y))
+         (v_0 (vec2 0.0 0.0))
+         (r 11.0)
+         (m 100.0))
+    (make-ball p_0 v_0 #f #f thrm-r thrm-m thrm-color "+1 → +succ0")))
 
 (define (add_zero p_0x p_0y)
   (let* ((p_0 (vec2 p_0x p_0y))
          (v_0 (vec2 0.0 0.0))
-         (θ_0 0.0)
-         (ω_0 0.0)
          (r 11.0)
-         (m 100.0)
-         (I (* 0.5 m (* r r))))
-    (make-ball p_0 v_0 θ_0 ω_0 #f r m I
-               'green
-               "+,+0 -> +")))
+         (m 100.0))
+    (make-ball p_0 v_0 #f #f thrm-r thrm-m thrm-color "+,+0 → +")))
 
 (define (add_succ p_0x p_0y)
   (let* ((p_0 (vec2 p_0x p_0y))
          (v_0 (vec2 0.0 0.0))
-         (θ_0 0.0)
-         (ω_0 0.0)
          (r 11.0)
-         (m 100.0)
-         (I (* 0.5 m (* r r))))
-    (make-ball p_0 v_0 θ_0 ω_0 #f r m I
-               'green
-               "+,+succ -> succ+,succ+")))
+         (m 100.0))
+    (make-ball p_0 v_0 #f #f thrm-r thrm-m thrm-color "+,+succ → succ+,succ+")))

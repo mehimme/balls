@@ -25,7 +25,8 @@
    make-ball
    ball?
    ;; mutable
-   ball-p ball-v ball-θ ball-ω ball-dropped? ball-p-set! ball-v-set! ball-θ-set! ball-ω-set! ball-dropped-set!
+   ball-p ball-v ball-dropped? ball-merged?
+   ball-p-set! ball-v-set! ball-dropped-set! ball-merged-set!
    ;; immutable
    ball-r ball-m ball-I ball-color ball-label
 
@@ -33,8 +34,8 @@
    make-goal
    goal?
    ;; mutable
-   goal-p      goal-v      goal-θ      goal-ω
-   goal-p-set! goal-v-set! goal-θ-set! goal-ω-set!
+   goal-p      goal-v
+   goal-p-set! goal-v-set!
    goal-r      goal-m      goal-I      goal-color      goal-label
    goal-r-set! goal-m-set! goal-I-set! goal-color-set! goal-label-set!
 
@@ -43,6 +44,13 @@
    wall?
    ;; immutable
    wall-p wall-n wall-v wall-e
+   wall-color
+
+   <buf>
+   make-buf
+   buf?
+   buf-vec buf-used buf-used-set! buf-push!
+   buf-do buf-buf-do
 
    <world>
    make-world
@@ -55,30 +63,27 @@
    ;; immutable
    world-tactics world-theorems world-walls))
 
+(define wall-color "#020887") ;; dark blue
+
 (define-record-type <ball>
-  (make-ball p v θ ω dropped? r m I color label)
+  (make-ball p v dropped? merged? r m color label)
   ball?
   (p ball-p ball-p-set!)               ;; position
   (v ball-v ball-v-set!)               ;; velocity
-  (θ ball-θ ball-θ-set!)               ;; angular position
-  (ω ball-ω ball-ω-set!)               ;; angular velocity
   (dropped? ball-dropped? ball-dropped-set!)
+  (merged? ball-merged? ball-merged-set!)
   (r ball-r)                           ;; radius
   (m ball-m)                           ;; mass
-  (I ball-I)                           ;; moment of inertia
   (color ball-color)
   (label ball-label))
 
 (define-record-type <goal>
-  (make-goal p v θ ω r m I color label)
+  (make-goal p v r m color label)
   goal?
   (p goal-p goal-p-set!)               ;; position
   (v goal-v goal-v-set!)               ;; velocity
-  (θ goal-θ goal-θ-set!)               ;; angular position
-  (ω goal-ω goal-ω-set!)               ;; angular velocity
   (r goal-r goal-r-set!)               ;; radius
   (m goal-m goal-m-set!)               ;; mass
-  (I goal-I goal-I-set!)               ;; moment of inertia
   (color goal-color goal-color-set!)
   (label goal-label goal-label-set!))
 
@@ -89,6 +94,36 @@
   (n wall-n) ;; unit normal vector (in collision direction)
   (v wall-v)
   (e wall-e)) ;; coefficient of restitution: 0 = inelastic, 1 = elastic
+
+(define-record-type <buf>
+  (make-buf vec used)
+  buf?
+  (vec buf-vec)
+  (used buf-used buf-used-set!))
+
+(define (buf-push! buf x)
+  (let* ((vec (buf-vec buf))
+         (used (buf-used buf)))
+    (if (= used (vector-length vec))
+        (error "buffer full" buf x)
+        (begin
+          (vector-set! vec used x)
+          (buf-used-set! buf (+ used 1))))))
+
+(define (buf-do buf expr)
+  (do ((i 0 (+ i 1)))
+      ((= i (buf-used buf)))
+    (let ((x (vector-ref (buf-vec buf) i)))
+      (expr x))))
+
+(define (buf-buf-do buf expr)
+  (do ((i 0 (+ i 1)))
+      ((= i (buf-used buf)))
+    (let ((x_i (vector-ref (buf-vec buf) i)))
+      (do ((j 0 (+ j 1)))
+          ((= j (buf-used buf)))
+        (let ((x_j (vector-ref (buf-vec buf) j)))
+          (if (not (= i j)) (expr x_i x_j)))))))
 
 (define-record-type <world>
   (make-world state held-ents dropped-ents goals curr-held-left? curr-held-right? drop? tactics theorems walls)
