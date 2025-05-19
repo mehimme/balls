@@ -55,12 +55,18 @@ window.addEventListener("load", async () => {
         canvas: {
           getContext: (elem, type) => elem.getContext(type),
           setFillColor: (ctx, color) => ctx.fillStyle = color,
+          setStrokeColor: (ctx, color) => ctx.strokeStyle = color,
+          setLineWidth: (ctx, w) => ctx.lineWidth = w,
           setFont: (ctx, font) => ctx.font = font,
           setTextAlign: (ctx, align) => ctx.textAlign = align,
           clearRect: (ctx, x, y, w, h) => ctx.clearRect(x, y, w, h),
           fillRect: (ctx, x, y, w, h) => ctx.fillRect(x, y, w, h),
           fillText: (ctx, text, x, y) => ctx.fillText(text, x, y),
+          fill: (ctx) => ctx.fill(),
+          stroke: (ctx) => ctx.stroke(),
           drawImage: (ctx, image, sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh),
+          beginPath: (ctx) => ctx.beginPath(),
+          arc: (ctx, x, y, r, startAngle, endAngle) => ctx.arc(x, y, r, startAngle, endAngle),
           setScale: (ctx, sx, sy) => ctx.scale(sx, sy),
           setTransform: (ctx, a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e, f),
           setImageSmoothingEnabled: (ctx, enabled) => ctx.imageSmoothingEnabled = (enabled == 1)

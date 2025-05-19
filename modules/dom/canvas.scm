@@ -22,12 +22,18 @@
   #:use-module (hoot ffi)
   #:export (get-context
             set-fill-color!
+            set-stroke-color!
+            set-line-width!
             set-font!
             set-text-align!
             clear-rect
             fill-rect
             fill-text
+            fill
+            stroke
             draw-image
+            begin-path
+            arc
             set-scale!
             set-transform!
             set-image-smoothing-enabled!))
@@ -41,6 +47,12 @@
 (define-foreign set-fill-color!
   "canvas" "setFillColor"
   (ref extern) (ref string) -> none)
+(define-foreign set-stroke-color!
+  "canvas" "setStrokeColor"
+  (ref extern) (ref string) -> none)
+(define-foreign set-line-width!
+  "canvas" "setLineWidth"
+  (ref extern) f64 -> none)
 (define-foreign set-font!
   "canvas" "setFont"
   (ref extern) (ref string) -> none)
@@ -56,9 +68,21 @@
 (define-foreign fill-text
   "canvas" "fillText"
   (ref extern) (ref string) f64 f64 -> none)
+(define-foreign fill
+  "canvas" "fill"
+  (ref extern) -> none)
+(define-foreign stroke
+  "canvas" "stroke"
+  (ref extern) -> none)
 (define-foreign draw-image
   "canvas" "drawImage"
   (ref extern) (ref extern) f64 f64 f64 f64 f64 f64 f64 f64 -> none)
+(define-foreign begin-path
+  "canvas" "beginPath"
+  (ref extern) -> none)
+(define-foreign arc
+  "canvas" "arc"
+  (ref extern) f64 f64 f64 f64 f64 -> none)
 (define-foreign set-scale!
   "canvas" "setScale"
   (ref extern) f64 f64 -> none)
