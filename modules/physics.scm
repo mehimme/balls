@@ -96,18 +96,17 @@
   (let* ((d (vec2-sub (ball-p a) (ball-p b))) ;; normal displacement
          (Δ (vec2-magnitude d))
          (r-a (ball-r a))
-         (r-b (ball-r b))
-         (inv-m-a (/ 1 (ball-m a)))
-         (inv-m-b (/ 1 (ball-m b)))
-         (v-a (ball-v a))
-         (v-b (ball-v b))
-         (n (vec2-normalize d)) ;; unit normal
-         (rv (vec2-sub v-a v-b)) ;; rel velocity
-         (rvn-mag (vec2-dot rv n)) ;; normal component of rel velocity
-         (vn-impulse (vec2 0.0 0.0)))
-
-    (if (< Δ (+ r-a r-b))
-        (let ((vn-impulse-mag (/ (- (* (+ 1 e-ball-ball) rvn-mag)) (+ inv-m-a inv-m-b))))
+         (r-b (ball-r b)))
+    (if (< Δ (+ r-a r-b)) ;; balls intersect
+        (let* ((inv-m-a (/ 1 (ball-m a)))
+               (inv-m-b (/ 1 (ball-m b)))
+               (v-a (ball-v a))
+               (v-b (ball-v b))
+               (n (vec2-normalize d)) ;; unit normal
+               (rv (vec2-sub v-a v-b)) ;; rel velocity
+               (rvn-mag (vec2-dot rv n)) ;; normal component of rel velocity
+               (vn-impulse-mag (/ (- (* (+ 1 e-ball-ball) rvn-mag)) (+ inv-m-a inv-m-b)))
+               (vn-impulse (vec2 0.0 0.0))) ;; a->b normal impulse due to collision
           (if (< rvn-mag 0.0) ;; balls are moving into each other
               (set! vn-impulse (vec2-mul-scalar n vn-impulse-mag))) ;; bounce off each other
           (vec2-add! v-a (vec2-mul-scalar vn-impulse inv-m-a))
@@ -130,16 +129,36 @@
 (define (apply-ball-wall-correction! ball wall)
   (let ((Δ-ball-wall (dist-ball-wall ball wall))
         (r-ball (ball-r ball)))
-    (if (< Δ-ball-wall r-ball) ;; ball intersects wall and is still moving into wall
+    (if (< Δ-ball-wall r-ball)
         (let* ((v-ball (ball-v ball))
                (v-ball-x (vec2-x v-ball))
                (v-ball-y (vec2-y v-ball))
                (n-wall (wall-n wall))
                (n-wall-x (vec2-x n-wall))
                (n-wall-y (vec2-y n-wall)))
+          ;; ball intersects wall and is still moving into wall
           (if (> (abs n-wall-x) (abs n-wall-y))
               (if (< (* v-ball-x n-wall-x) 0.0) (set-vec2-x! v-ball 0.0))
               (if (< (* v-ball-y n-wall-y) 0.0) (set-vec2-y! v-ball 0.0)))))))
+
+(define (apply-ball-ball-correction! a b)
+  (let* ((d (vec2-sub (ball-p a) (ball-p b))) ;; normal displacement
+         (Δ (vec2-magnitude d))
+         (r-a (ball-r a))
+         (r-b (ball-r b)))
+    (if (< Δ (+ r-a r-b))
+        (let* ((inv-m-a (/ 1 (ball-m a)))
+               (inv-m-b (/ 1 (ball-m b)))
+               (v-a (ball-v a))
+               (v-b (ball-v b))
+               (n (vec2-normalize d)) ;; unit normal
+               (rv (vec2-sub v-a v-b)) ;; rel velocity
+               (v-an-mag (vec2-dot v-a n))
+               (v-bn-mag (vec2-dot v-b n))
+               (rvn-mag (vec2-dot rv n))) ;; normal component of rel velocity
+          ;; balls intersect and are still moving into each other
+          (if (< v-an-mag 0.0) (vec2-sub! v-a (vec2-mul-scalar n (* 1.01 v-an-mag))))
+          (if (> v-bn-mag 0.0) (vec2-sub! v-b (vec2-mul-scalar n (* 1.01 v-bn-mag))))))))
 
 (define (step-world! world)
   (let* ((held-ents (world-held-ents world))
@@ -167,6 +186,9 @@
                   (apply-ball-ball-collision! ent-a ent-b)))
 
     ;; entity-entity penetration correction
+    (buf-buf-do dropped-ents
+                (lambda (ent-a ent-b)
+                  (apply-ball-ball-correction! ent-a ent-b)))
 
     ;; wall penetration correction
     (do ((i 0 (+ i 1))) ((= i (vector-length walls)))
